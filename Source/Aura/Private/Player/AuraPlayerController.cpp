@@ -25,9 +25,11 @@ void AAuraPlayerController::BeginPlay()
 	check(AuraContext);
 
 	// 设置UInputMappingContext
-	UEnhancedInputLocalPlayerSubsystem* SubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	check(SubSystem);
-	SubSystem->AddMappingContext(AuraContext, 0);
+	// 多人游戏中，其他玩家的GetSubsystem将会拿不到，也就不受控制
+	if (UEnhancedInputLocalPlayerSubsystem* SubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	{
+		SubSystem->AddMappingContext(AuraContext, 0);
+	}
 
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
