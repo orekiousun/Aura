@@ -2,6 +2,10 @@
 
 
 #include "AbilitySystem/AuraAttributeSet.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include  "GameplayEffectExtension.h"
+#include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
@@ -19,6 +23,29 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+}
+
+void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	// 在属性改变之前对即将赋予的新值进行预处理
+	if (Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
+	}
+	if (Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMana());
+	}
+}
+
+void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+
+	FEffectProperties Props;
+	SetEffectProperties(Data, Props);
 }
 
 // 在复制的时候通知AbilitySystem这个Attribute改变了
@@ -40,4 +67,39 @@ void UAuraAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldMana) const
 void UAuraAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, MaxMana, OldMaxMana);
+}
+
+void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const
+{
+	// Source = causer of the effect, Target = target of the effect(owner of AS)
+	Props.EffectContextHandle = Data.EffectSpec.GetContext();
+	Props.SourceASC = Props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+	if (IsValid(Props.SourceASC) && Props.SourceASC->AbilityActorInfo.IsValid() && Props.SourceASC->AbilityActorInfo->
+		AvatarActor.
+		IsValid())
+	{
+		Props.SourceAvatarActor = Props.SourceASC->AbilityActorInfo->AvatarActor.Get();
+		// 获取PlayerController或者普通Controller
+		Props.SourceController = Props.SourceASC->AbilityActorInfo->PlayerController.Get();
+		if (Props.SourceController == nullptr && Props.SourceAvatarActor != nullptr)
+		{
+			if (const APawn* Pawn = Cast<APawn>(Props.SourceAvatarActor))
+			{
+				Props.SourceController = Pawn->GetController();
+			}
+		}
+		if (Props.SourceController)
+		{
+			Props.SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
+		}
+	}
+
+	// ReadTarget
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+	{
+		Props.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+		Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
+		Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
+	}
 }
