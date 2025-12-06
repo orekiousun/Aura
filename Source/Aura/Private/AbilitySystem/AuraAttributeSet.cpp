@@ -46,6 +46,17 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
+
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		// 这里要重新设置一遍BaseValue，使得Value的实际值是Clamp之后的值
+		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+	}
+	if (Data.EvaluatedData.Attribute == GetManaAttribute())
+	{
+		// 这里要重新设置一遍BaseValue，使得Value的实际值是Clamp之后的值
+		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
+	}
 }
 
 // 在复制的时候通知AbilitySystem这个Attribute改变了
