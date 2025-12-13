@@ -59,9 +59,9 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
-	
-    // 这里要重新设置一遍BaseValue，使得Value的实际值是Clamp之后的值
-    // 上面PreAttributeChange中Clamp的只是CurrentValue，但实际上CurrentValue是由BaseValue+GE算出来的，是用作显示的值
+
+	// 这里要重新设置一遍BaseValue，使得Value的实际值是Clamp之后的值
+	// 上面PreAttributeChange中Clamp的只是CurrentValue，但实际上CurrentValue是由BaseValue+GE算出来的，是用作显示的值
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
