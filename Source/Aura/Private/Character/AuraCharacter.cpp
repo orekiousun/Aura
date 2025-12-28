@@ -2,16 +2,19 @@
 
 
 #include "Character/AuraCharacter.h"
-
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/AuraPlayerController.h"
 #include "Player/AuraPlayerState.h"
 #include "UI/HUD/AuraHUD.h"
+#include "Aura/Aura.h"
+#include "Components/CapsuleComponent.h"
 
 AAuraCharacter::AAuraCharacter()
 {
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Projectile, ECR_Ignore);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 400.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
